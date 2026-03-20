@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: saas-generator-control-panel-web
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn web_app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: CONTROL_PANEL_SECRET_KEY
+        sync: false
+      - key: CONTROL_PANEL_DATABASE_URL
+        fromDatabase:
+          name: saas-generator-control-panel-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+  - type: worker
+    name: saas-generator-control-panel-worker
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python control_panel_worker.py
+    envVars:
+      - key: CONTROL_PANEL_SECRET_KEY
+        sync: false
+      - key: CONTROL_PANEL_DATABASE_URL
+        fromDatabase:
+          name: saas-generator-control-panel-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+databases:
+  - name: saas-generator-control-panel-db
+    plan: starter

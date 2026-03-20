@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: saas_generator
+      POSTGRES_PASSWORD: saas_generator
+      POSTGRES_DB: control_panel
+    ports:
+      - "5432:5432"
+    volumes:
+      - control-panel-postgres:/var/lib/postgresql/data
+
+  control-panel-web:
+    build:
+      context: ..
+      dockerfile: Dockerfile.control-panel
+    command: uvicorn web_app:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    environment:
+      CONTROL_PANEL_SECRET_KEY: ${CONTROL_PANEL_SECRET_KEY:-local-dev-secret-key-change-me}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CONTROL_PANEL_DATABASE_URL: ${CONTROL_PANEL_DATABASE_URL:-postgresql+psycopg://saas_generator:saas_generator@postgres:5432/control_panel}
+
+  control-panel-worker:
+    build:
+      context: ..
+      dockerfile: Dockerfile.control-panel
+    command: python control_panel_worker.py
+    depends_on:
+      - postgres
+    environment:
+      CONTROL_PANEL_SECRET_KEY: ${CONTROL_PANEL_SECRET_KEY:-local-dev-secret-key-change-me}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CONTROL_PANEL_DATABASE_URL: ${CONTROL_PANEL_DATABASE_URL:-postgresql+psycopg://saas_generator:saas_generator@postgres:5432/control_panel}
+
+volumes:
+  control-panel-postgres:

@@ -1,0 +1,11 @@
+agent-env/
+__pycache__/
+.pytest_cache/
+.crewai_storage/
+.env
+memory/*.db
+memory/*.sqlite
+memory/*.sqlite3
+generated_app/
+generated_apps/
+*.pyc

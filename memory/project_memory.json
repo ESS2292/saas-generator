@@ -1,0 +1,158 @@
+[
+  {
+    "type": "user_idea",
+    "content": "build a personal training application"
+  },
+  {
+    "type": "intake_context",
+    "idea": "build a personal training application",
+    "content": {
+      "support_tier": "supported",
+      "closest_family": "learning_platform",
+      "handoff_mode": "full_family_generation",
+      "handoff_notes": [
+        "The request fits the supported family-based generator envelope."
+      ],
+      "refinement_steps": [
+        "Map the request into the closest supported family: learning_platform.",
+        "Prefer structured entities, workflows, permissions, and deployment artifacts over bespoke one-off code.",
+        "If the request exceeds support, downgrade to the closest starter scaffold and retain limitation notes."
+      ]
+    }
+  },
+  {
+    "type": "spec_brief",
+    "idea": "build a personal training application",
+    "content": {
+      "goal": "Build a personal training application",
+      "closest_family": "learning_platform",
+      "support_tier": "supported",
+      "primary_users": [
+        "operator",
+        "customer"
+      ],
+      "core_entities": [
+        "lesson"
+      ],
+      "core_workflows": [
+        "learning progress flow"
+      ],
+      "page_intents": [
+        "overview dashboard",
+        "learning platform workspace",
+        "records management"
+      ],
+      "integration_hints": [],
+      "risk_flags": [],
+      "clarification_prompts": [
+        "Confirm the main success metric for the learning platform app.",
+        "Confirm the highest-priority workflow to optimize first.",
+        "Confirm the minimum set of entities required for the first version."
+      ]
+    }
+  },
+  {
+    "type": "user_idea",
+    "content": "personal training app that shows what workouts to do and how"
+  },
+  {
+    "type": "intake_context",
+    "idea": "personal training app that shows what workouts to do and how",
+    "content": {
+      "support_tier": "supported",
+      "closest_family": "learning_platform",
+      "handoff_mode": "full_family_generation",
+      "handoff_notes": [
+        "The request fits the supported family-based generator envelope."
+      ],
+      "refinement_steps": [
+        "Map the request into the closest supported family: learning_platform.",
+        "Prefer structured entities, workflows, permissions, and deployment artifacts over bespoke one-off code.",
+        "If the request exceeds support, downgrade to the closest starter scaffold and retain limitation notes."
+      ]
+    }
+  },
+  {
+    "type": "spec_brief",
+    "idea": "personal training app that shows what workouts to do and how",
+    "content": {
+      "goal": "Personal training app that shows what workouts to do and how",
+      "closest_family": "learning_platform",
+      "support_tier": "supported",
+      "primary_users": [
+        "operator",
+        "customer"
+      ],
+      "core_entities": [
+        "lesson"
+      ],
+      "core_workflows": [
+        "learning progress flow"
+      ],
+      "page_intents": [
+        "overview dashboard",
+        "learning platform workspace",
+        "records management"
+      ],
+      "integration_hints": [],
+      "risk_flags": [],
+      "clarification_prompts": [
+        "Confirm the main success metric for the learning platform app.",
+        "Confirm the highest-priority workflow to optimize first.",
+        "Confirm the minimum set of entities required for the first version."
+      ]
+    }
+  },
+  {
+    "type": "user_idea",
+    "content": "personal training app"
+  },
+  {
+    "type": "intake_context",
+    "idea": "personal training app",
+    "content": {
+      "support_tier": "supported",
+      "closest_family": "learning_platform",
+      "handoff_mode": "full_family_generation",
+      "handoff_notes": [
+        "The request fits the supported family-based generator envelope."
+      ],
+      "refinement_steps": [
+        "Map the request into the closest supported family: learning_platform.",
+        "Prefer structured entities, workflows, permissions, and deployment artifacts over bespoke one-off code.",
+        "If the request exceeds support, downgrade to the closest starter scaffold and retain limitation notes."
+      ]
+    }
+  },
+  {
+    "type": "spec_brief",
+    "idea": "personal training app",
+    "content": {
+      "goal": "Personal training app",
+      "closest_family": "learning_platform",
+      "support_tier": "supported",
+      "primary_users": [
+        "operator",
+        "customer"
+      ],
+      "core_entities": [
+        "lesson"
+      ],
+      "core_workflows": [
+        "learning progress flow"
+      ],
+      "page_intents": [
+        "overview dashboard",
+        "learning platform workspace",
+        "records management"
+      ],
+      "integration_hints": [],
+      "risk_flags": [],
+      "clarification_prompts": [
+        "Confirm the main success metric for the learning platform app.",
+        "Confirm the highest-priority workflow to optimize first.",
+        "Confirm the minimum set of entities required for the first version."
+      ]
+    }
+  }
+]

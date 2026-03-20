@@ -1,0 +1,17 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "deploy": {
+    "startCommand": "uvicorn web_app:app --host 0.0.0.0 --port $PORT",
+    "restartPolicyType": "on_failure",
+    "restartPolicyMaxRetries": 5
+  },
+  "environments": {
+    "production": {
+      "variables": {
+        "CONTROL_PANEL_DATABASE_URL": "${{Postgres.DATABASE_URL}}",
+        "CONTROL_PANEL_SECRET_KEY": "",
+        "OPENAI_API_KEY": ""
+      }
+    }
+  }
+}
