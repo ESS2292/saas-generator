@@ -97,6 +97,26 @@ For hosted deployments, `CONTROL_PANEL_DATABASE_URL` should point to Postgres.
 
 ## Running The Product Locally
 
+### One-command local demo
+
+If you want the cleanest portfolio flow, use:
+
+```bash
+./scripts/start_local_control_panel.sh
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+Stop the local demo services with:
+
+```bash
+./scripts/stop_local_control_panel.sh
+```
+
 ### Control panel web service
 
 ```bash
@@ -142,6 +162,26 @@ The browser UI currently includes:
 - artifact and log access
 - secret storage
 - download/export for generated apps
+
+## Portfolio Demo
+
+If you are using this project in a portfolio, start with:
+
+- [`PORTFOLIO_DEMO.md`](./PORTFOLIO_DEMO.md)
+
+That guide includes:
+
+- the fastest local launch path
+- demo-ready prompts
+- a suggested walkthrough
+- a checklist for avoiding failed live demos
+
+Recommended first demo prompts:
+
+- CRM for leads, deals, and follow-up tasks
+- booking platform for trainers and clients
+- support desk with tickets and SLA tracking
+- recruiting platform with interview stages
 
 ## Provider Readiness
 
@@ -194,7 +234,7 @@ The hosted architecture is:
 
 - Generated-app quality depends on a valid OpenAI API key and available quota.
 - Verification paths may require Docker and Node/npm locally.
-- The control panel is production-shaped, but some infrastructure concerns still belong on the roadmap, such as streaming run updates, stronger secrets management, and richer hosted ops.
+- The control panel is production-shaped, but some infrastructure concerns still belong on the roadmap, such as stronger secrets management and richer hosted ops.
 
 ## Recommended Next Steps
 
