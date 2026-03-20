@@ -14,6 +14,8 @@ def _message_from_exception(exc):
 
 
 def check_openai_generation_access():
+    # The control panel uses a tiny live API call as a preflight so users get
+    # a clear provider/billing error before they queue a full generation job.
     load_dotenv()
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:

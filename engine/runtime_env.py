@@ -5,6 +5,9 @@ import appdirs
 
 
 def configure_runtime_environment():
+    # CrewAI defaults to user-level storage directories under the home folder.
+    # In this project we pin that storage inside the repo so local runs and the
+    # worker process stay writable and predictable.
     storage_dir = Path(".crewai_storage").resolve()
     storage_dir.mkdir(parents=True, exist_ok=True)
 
@@ -17,6 +20,8 @@ def configure_runtime_environment():
     original_user_data_dir = appdirs.user_data_dir
 
     def _patched_user_data_dir(appname=None, appauthor=None, version=None, roaming=False):
+        # Only redirect CrewAI-owned storage. Everything else should use the
+        # normal platform-specific appdirs behavior.
         if appauthor == "CrewAI":
             return str(storage_dir)
         return original_user_data_dir(appname=appname, appauthor=appauthor, version=version, roaming=roaming)
@@ -29,6 +34,8 @@ def configure_runtime_environment():
     except Exception:
         pass
 
+    # Some CrewAI modules import and bind the path helper at import time, so we
+    # patch the commonly used storage modules directly as well.
     for module_name in (
         "crewai.memory.storage.kickoff_task_outputs_storage",
         "crewai.memory.storage.ltm_sqlite_storage",

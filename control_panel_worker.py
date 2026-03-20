@@ -6,6 +6,8 @@ from engine.control_panel_jobs import build_worker_id, worker_loop
 
 
 def main():
+    # The worker runs as its own long-lived process so queued runs can be processed
+    # independently from the web server lifecycle.
     runtime = configure_runtime_environment()
     init_db()
     worker_id = build_worker_id("service-worker")
