@@ -4,7 +4,7 @@ import hmac
 import json
 import os
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from sqlalchemy import Boolean, Column, Integer, MetaData, String, Table, Text, create_engine, delete, desc, func, insert, select, update
@@ -129,6 +129,12 @@ def init_db():
 
 def _utc_now():
     return datetime.now(timezone.utc).isoformat()
+
+
+def _parse_utc(timestamp):
+    if not timestamp:
+        return None
+    return datetime.fromisoformat(timestamp)
 
 
 def _month_key():
@@ -563,6 +569,15 @@ def get_job_for_run(run_id):
     return dict(row._mapping) if row else None
 
 
+def list_jobs_by_status(status):
+    init_db()
+    with _engine().begin() as connection:
+        rows = connection.execute(
+            select(jobs).where(jobs.c.status == status).order_by(jobs.c.updated_at.asc())
+        ).fetchall()
+    return [dict(row._mapping) for row in rows]
+
+
 def set_user_plan(user_id, plan, monthly_run_limit):
     init_db()
     with _engine().begin() as connection:
@@ -611,3 +626,47 @@ def list_recent_workers(limit=10):
             select(worker_heartbeats).order_by(desc(worker_heartbeats.c.last_seen_at)).limit(limit)
         ).fetchall()
     return [dict(row._mapping) for row in rows]
+
+
+def get_worker_heartbeat(worker_id):
+    init_db()
+    with _engine().begin() as connection:
+        row = connection.execute(
+            select(worker_heartbeats).where(worker_heartbeats.c.worker_id == worker_id)
+        ).first()
+    return dict(row._mapping) if row else None
+
+
+def recover_stale_jobs(worker_timeout_seconds=90, lease_timeout_seconds=180):
+    init_db()
+    now = datetime.now(timezone.utc)
+    stale_jobs = []
+    with _engine().begin() as connection:
+        running_rows = connection.execute(
+            select(jobs).where(jobs.c.status == "running").order_by(jobs.c.updated_at.asc())
+        ).fetchall()
+        for row in running_rows:
+            job = dict(row._mapping)
+            updated_at = _parse_utc(job.get("updated_at"))
+            if updated_at is None:
+                continue
+            worker_stale = False
+            worker_id = job.get("worker_id")
+            if worker_id:
+                worker_row = connection.execute(
+                    select(worker_heartbeats).where(worker_heartbeats.c.worker_id == worker_id)
+                ).first()
+                if worker_row is None:
+                    worker_stale = True
+                else:
+                    last_seen = _parse_utc(worker_row._mapping["last_seen_at"])
+                    worker_stale = last_seen is None or last_seen < now - timedelta(seconds=worker_timeout_seconds)
+            lease_stale = updated_at < now - timedelta(seconds=lease_timeout_seconds)
+            if worker_stale or lease_stale:
+                connection.execute(
+                    update(jobs)
+                    .where(jobs.c.id == job["id"])
+                    .values(status="queued", worker_id=None, updated_at=_utc_now())
+                )
+                stale_jobs.append(job["run_id"])
+    return stale_jobs

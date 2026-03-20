@@ -329,6 +329,60 @@ def test_web_app_exposes_provider_status_to_authenticated_user(tmp_path, monkeyp
     assert response.json()["status"] == "insufficient_quota"
 
 
+def test_web_app_exposes_observability_summary(tmp_path, monkeypatch):
+    _isolate_control_panel_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        web_app,
+        "check_openai_generation_access",
+        lambda: {"ok": True, "status": "ready", "message": "Ready"},
+    )
+    client = TestClient(web_app.app)
+    register_response = _register_and_login(client)
+    user_id = register_response.json()["user"]["id"]
+    control_panel_store.record_worker_heartbeat("worker-1")
+    control_panel_store.create_run(user_id, "Build CRM", "generated_apps/crm")
+
+    response = client.get("/api/observability/summary")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["job_counts"]["queued"] == 1
+    assert payload["job_counts"]["running"] == 0
+    assert payload["workers"][0]["worker_id"] == "worker-1"
+    assert payload["workers"][0]["heartbeat_age_seconds"] >= 0
+
+
+def test_web_app_exposes_run_observability_metrics(tmp_path, monkeypatch):
+    _isolate_control_panel_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        web_app,
+        "check_openai_generation_access",
+        lambda: {"ok": True, "status": "ready", "message": "Ready"},
+    )
+    client = TestClient(web_app.app)
+    register_response = _register_and_login(client)
+    user_id = register_response.json()["user"]["id"]
+    run = control_panel_store.create_run(user_id, "Build CRM", "generated_apps/crm")
+    control_panel_store.append_run_log(run["id"], "info", "Run queued.")
+    control_panel_store.append_run_log(run["id"], "info", "Worker claimed queued run.")
+    control_panel_store.append_run_log(run["id"], "info", "Starting generator pipeline.")
+    control_panel_store.update_run(run["id"], status="completed")
+    control_panel_store.append_run_log(run["id"], "info", "Pipeline finished with status=completed.")
+
+    response = client.get(f"/api/observability/runs/{run['id']}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["run_id"] == run["id"]
+    assert payload["status"] == "completed"
+    assert payload["attempt_count"] == 1
+    assert payload["log_count"] >= 4
+    assert payload["current_stage"]["key"] == "completed"
+    assert "queued" in payload["stages"]
+    assert "running" in payload["stages"]
+    assert "planning" in payload["stages"]
+
+
 def test_web_app_blocks_run_creation_when_provider_is_not_ready(tmp_path, monkeypatch):
     _isolate_control_panel_db(tmp_path, monkeypatch)
     monkeypatch.setattr(
@@ -387,7 +441,19 @@ def test_web_app_renders_run_detail_page(tmp_path, monkeypatch):
     assert "CRM Control" in response.text
     assert "Progress" in response.text
     assert "Download app" in response.text
-    assert "EventSource('/api/runs/" in response.text
+    assert '/static/js/run_detail.js' in response.text
+    assert f'data-run-id="{run["id"]}"' in response.text
+
+
+def test_web_app_serves_static_frontend_modules(tmp_path, monkeypatch):
+    _isolate_control_panel_db(tmp_path, monkeypatch)
+    client = TestClient(web_app.app)
+
+    response = client.get("/static/js/dashboard.js")
+
+    assert response.status_code == 200
+    assert "requestJson" in response.text
+    assert "loadRuns" in response.text
 
 
 def test_web_app_streams_run_updates(tmp_path, monkeypatch):

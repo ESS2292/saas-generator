@@ -37,6 +37,33 @@ def test_crm_business_engine_advances_deal_stage(tmp_path):
             assert response.json()["deal"]["status"] == "proposal"
 
 
+def test_crm_business_engine_reassigns_deal_and_returns_snapshot(tmp_path):
+    case = next(case for case in GOLDEN_PROMPTS if case["name"] == "crm")
+    app_root = tmp_path / "crm_reassign"
+    build_project_from_manifest(case["manifest_output"], app_root=str(app_root))
+
+    with _generated_backend_context(str(app_root)):
+        from main import app
+
+        with TestClient(app) as client:
+            reassign = client.post("/api/crm/deals/1/reassign?owner=Jordan&user_email=avery@example.com")
+            assert reassign.status_code == 200
+            assert reassign.json()["deal"]["owner"] == "Jordan"
+
+            snapshot = client.get("/api/crm/deals/1/snapshot")
+            assert snapshot.status_code == 200
+            assert snapshot.json()["deal"]["owner"] == "Jordan"
+            assert isinstance(snapshot.json()["activity"], list)
+
+            account_health = client.get("/api/crm/account-health")
+            assert account_health.status_code == 200
+            assert "accounts" in account_health.json()
+
+            activity = client.get("/api/crm/activity")
+            assert activity.status_code == 200
+            assert any(entry["eventType"] == "owner_reassigned" for entry in activity.json()["activity"])
+
+
 def test_support_business_engine_escalates_ticket(tmp_path):
     case = next(case for case in GOLDEN_PROMPTS if case["name"] == "support")
     app_root = tmp_path / "support"

@@ -90,12 +90,19 @@ def test_crm_renderer_adds_pipeline_backend_and_frontend():
 
     assert "@app.get('/api/crm/pipeline')" in file_map["backend/app_core.py"]
     assert "@app.get('/api/crm/accounts')" in file_map["backend/app_core.py"]
+    assert "@app.get('/api/crm/account-health')" in file_map["backend/app_core.py"]
+    assert "@app.get('/api/crm/activity')" in file_map["backend/app_core.py"]
+    assert "@app.get('/api/crm/deals/{item_id}/snapshot')" in file_map["backend/app_core.py"]
     assert "@app.post('/api/crm/deals/{item_id}/advance')" in file_map["backend/app_core.py"]
-    assert "from family_logic import advance_crm_deal_status, build_crm_accounts, build_crm_pipeline" in file_map["backend/app_core.py"]
-    assert "build_crm_pipeline" in file_map["backend/family_logic.py"]
+    assert "@app.post('/api/crm/deals/{item_id}/reassign')" in file_map["backend/app_core.py"]
+    assert "reassign_crm_deal_owner" in file_map["backend/app_core.py"]
+    assert "build_crm_account_health" in file_map["backend/family_logic.py"]
+    assert "record_crm_event" in file_map["backend/family_logic.py"]
     assert "CrmFamilyPanel" in file_map["frontend/src/appShell.jsx"]
     assert "export function CrmFamilyPanel" in file_map["frontend/src/familyPanel.jsx"]
     assert "loadCrmOperations" in file_map["frontend/src/appShell.jsx"]
+    assert "crmAccountHealth" in file_map["frontend/src/appShell.jsx"]
+    assert "crmActivity" in file_map["frontend/src/familyPanel.jsx"]
 
 
 def test_support_renderer_adds_queue_backend_and_frontend():

@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 from engine.file_writer import GeneratedProjectError
-from templates.family_extensions import FAMILY_VALIDATIONS
+from templates.family_extensions import FAMILY_PACKS
 
 
 def _page_component_filename(page_name):
@@ -12,21 +12,21 @@ def _page_component_filename(page_name):
 
 
 def _validate_family_specific_markers(app_type, backend_source, frontend_source):
-    validation = FAMILY_VALIDATIONS.get(app_type)
-    if not validation:
+    pack = FAMILY_PACKS.get(app_type)
+    if not pack:
         return
 
-    for marker in validation.get("backend_markers", ()):
+    for marker in pack.backend_markers:
         if marker not in backend_source:
             raise GeneratedProjectError(f"Generated {app_type} scaffold is missing marker: {marker}")
 
-    for marker in validation.get("frontend_markers", ()):
+    for marker in pack.frontend_markers:
         if marker not in frontend_source:
             raise GeneratedProjectError(f"Generated {app_type} scaffold is missing marker: {marker}")
 
 
 def _validate_family_specific_files(app_type, root):
-    if app_type not in FAMILY_VALIDATIONS:
+    if app_type not in FAMILY_PACKS:
         return
 
     backend_family_logic = root / "backend" / "family_logic.py"

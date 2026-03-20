@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+body { margin:0; font-family:'Manrope','Avenir Next','Segoe UI',sans-serif; background:radial-gradient(circle at top left, rgba(15,118,110,0.12), transparent 22%), radial-gradient(circle at 94% 10%, rgba(200,146,39,0.10), transparent 18%), linear-gradient(180deg, #f7fbf8 0%, #edf4f1 46%, #eef0ef 100%); color:#111827; }
+.shell { max-width:1120px; margin:0 auto; padding:28px 18px 64px; display:grid; gap:16px; }
+.card { position:relative; overflow:hidden; background:rgba(255,255,255,0.78); border:1px solid rgba(15,23,42,0.08); border-radius:28px; padding:24px; box-shadow:0 20px 52px rgba(15,23,42,0.10); backdrop-filter:blur(18px); }
+.card::after { content:""; position:absolute; inset:auto -40px -60px auto; width:180px; height:180px; background:radial-gradient(circle, rgba(15,118,110,0.08), transparent 70%); }
+.actions { display:flex; gap:12px; flex-wrap:wrap; }
+.button { display:inline-flex; align-items:center; gap:8px; text-decoration:none; color:white; background:linear-gradient(135deg,#0f766e,#115e59); border-radius:999px; padding:12px 18px; font-weight:700; border:0; }
+.secondary { background:linear-gradient(135deg,#f5d58d,#e89d2f); color:#7b4f06; }
+.outcome-banner { display:grid; gap:10px; }
+.outcome-ready { border-color:#b7e2c5; background:linear-gradient(180deg, rgba(237,255,244,0.96), rgba(255,255,255,0.92)); }
+.outcome-failed { border-color:#f4caca; background:linear-gradient(180deg, rgba(255,241,241,0.96), rgba(255,255,255,0.92)); }
+.outcome-progress { border-color:#c8ddf4; background:linear-gradient(180deg, rgba(240,248,255,0.96), rgba(255,255,255,0.92)); }
+.summary-grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); }
+.summary-card { border-radius:20px; border:1px solid rgba(15,23,42,0.08); padding:16px; background:rgba(255,255,255,0.9); position:relative; z-index:1; }
+.stage-track-wrap { min-width:220px; display:grid; gap:8px; } .stage-pill { border-radius:999px; padding:6px 10px; font-size:0.76rem; font-weight:700; background:#e2e8f0; color:#475569; width:max-content; } .stage-track { width:100%; height:7px; border-radius:999px; background:rgba(148,163,184,0.18); overflow:hidden; } .stage-fill { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, #0f766e, #115e59); transition:width .25s ease; } .stage-done { background:#dcfce7; color:#166534; } .stage-current { background:#dbeafe; color:#1d4ed8; } .stage-failed { background:#fee2e2; color:#b91c1c; } .stage-pending { background:#e2e8f0; color:#64748b; } .stage-fill.stage-failed { background:linear-gradient(90deg, #ef4444, #b91c1c); } .stage-fill.stage-done { background:linear-gradient(90deg, #22c55e, #15803d); }
+pre { white-space:pre-wrap; background:#0f172a; color:#e2e8f0; border-radius:18px; padding:18px; overflow:auto; }
+ul { padding-left:18px; margin:0; position:relative; z-index:1; } h1,h2,p { margin:0; position:relative; z-index:1; }
+@media (prefers-color-scheme: dark) { body { background:radial-gradient(circle at top left, rgba(45,212,191,0.12), transparent 22%), radial-gradient(circle at 94% 10%, rgba(246,195,91,0.08), transparent 18%), linear-gradient(180deg, #07111e 0%, #0b1424 46%, #111827 100%); color:#edf2f7; } .card,.summary-card { background:rgba(15,23,42,0.84); border-color:rgba(148,163,184,0.16); } }
+html[data-theme="dark"], [data-theme="dark"] { color:#edf2f7; }
+body[data-theme="dark"] { background:radial-gradient(circle at top left, rgba(45,212,191,0.12), transparent 22%), radial-gradient(circle at 94% 10%, rgba(246,195,91,0.08), transparent 18%), linear-gradient(180deg, #07111e 0%, #0b1424 46%, #111827 100%); color:#edf2f7; }
+body[data-theme="dark"] .card,body[data-theme="dark"] .summary-card { background:rgba(15,23,42,0.84); border-color:rgba(148,163,184,0.16); } body[data-theme="dark"] .stage-track { background:rgba(148,163,184,0.18); }
+@media (max-width:680px) { .shell { padding:22px 14px 42px; } .card { padding:20px; border-radius:24px; } .summary-grid { grid-template-columns:1fr; } .actions { display:grid; } .button { width:100%; justify-content:center; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="shell" data-run-id="{{ run_id }}">
+  <section class="card outcome-banner {{ outcome_class }}">
+    <div class="actions">
+      <a class="button" href="/"><span>←</span><span>Back to Dashboard</span></a>
+      <a class="button secondary" href="/api/runs/{{ run_id }}/download"><span>↓</span><span>Download app</span></a>
+      <a class="button" href="/settings"><span>○</span><span>Settings</span></a>
+      <a id="themeToggle" class="button" href="/theme/toggle?next=/runs/{{ run_id }}"><span>◐</span><span>{{ theme_toggle_label }}</span></a>
+    </div>
+    <h1 id="runTitle">{{ app_name }}</h1>
+    <h2 id="outcomeTitle">{{ outcome_title }}</h2>
+    <p id="outcomeText">{{ outcome_text }}</p>
+  </section>
+  <section class="card">
+    <h2>□ Summary</h2>
+    <div class="summary-grid">
+      <div class="summary-card"><p><strong>App type:</strong> <span id="runFamily">{{ family_label }}</span></p></div>
+      <div class="summary-card"><p><strong>Build confidence:</strong> <span id="runSupport">{{ support_tier }}</span></p></div>
+      <div class="summary-card"><p><strong>Quality check:</strong> <span id="runVerification">{{ verification_label }}</span></p></div>
+      <div class="summary-card"><p><strong>Published online:</strong> <span id="runDeployed">{{ deployed_label }}</span></p></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2>◔ Progress</h2>
+    <p><strong>Status:</strong> <span id="runStatus">{{ status_label }}</span></p>
+    <p><strong>Current step:</strong> <span id="stageTimeline">{{ stage_markup|safe }}</span></p>
+    <p><strong>Your idea:</strong> <span id="runPrompt">{{ run_prompt }}</span></p>
+    <p><strong>Need attention:</strong> <span id="runError">{{ friendly_error }}</span></p>
+  </section>
+  <section class="card"><h2>↓ Files</h2><ul id="artifactList">{{ artifact_markup|safe }}</ul></section>
+  <section class="card"><h2>≡ Logs</h2><pre id="logOutput">{{ log_text }}</pre></section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="/static/js/run_detail.js"></script>
+{% endblock %}

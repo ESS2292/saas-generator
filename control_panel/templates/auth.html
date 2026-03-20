@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+:root { --ink:#111827; --muted:#5b6472; --line:rgba(15,23,42,0.08); --accent:#0f766e; --accent-deep:#115e59; --gold:#c89227; --card:rgba(255,255,255,0.76); --card-strong:rgba(255,255,255,0.92); --surface:#f4f7f6; --shadow:0 22px 60px rgba(15,23,42,0.10); color-scheme:light dark; }
+* { box-sizing:border-box; }
+body { margin:0; color:var(--ink); font-family:'Manrope','Avenir Next','Segoe UI',sans-serif; background:radial-gradient(circle at 8% 8%, rgba(15,118,110,0.12), transparent 24%), radial-gradient(circle at 92% 12%, rgba(200,146,39,0.10), transparent 18%), linear-gradient(180deg, #f8fbfa 0%, var(--surface) 44%, #eef2f1 100%); }
+.shell { max-width:1080px; margin:0 auto; padding:34px 18px 64px; display:grid; gap:18px; }
+.card { position:relative; overflow:hidden; background:var(--card); border:1px solid var(--line); border-radius:28px; padding:28px; box-shadow:var(--shadow); backdrop-filter:blur(18px); animation:riseIn .55s ease; }
+.card::after { content:""; position:absolute; inset:auto -50px -70px auto; width:180px; height:180px; background:radial-gradient(circle, rgba(15,118,110,0.08), transparent 70%); pointer-events:none; }
+.eyebrow { margin:0 0 10px; color:var(--accent); text-transform:uppercase; letter-spacing:0.16em; font-size:0.76rem; }
+h1,h2,p { margin:0; position:relative; z-index:1; }
+h1 { font-size:clamp(2.8rem,5vw,4.9rem); line-height:0.93; max-width:10ch; }
+h2 { font-size:1.6rem; }
+.lead { margin-top:12px; max-width:62ch; line-height:1.7; font-size:1.02rem; color:var(--muted); }
+.hero-pills { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; position:relative; z-index:1; }
+.hero-pill { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:10px 14px; border:1px solid var(--line); background:var(--card-strong); font-size:0.9rem; box-shadow:inset 0 1px 0 rgba(255,255,255,0.55); }
+.mini-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:999px; background:rgba(15,118,110,0.10); color:var(--accent-deep); font-size:0.72rem; font-weight:700; }
+.icon-chip { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; margin-right:10px; border-radius:999px; background:rgba(15,118,110,0.10); border:1px solid var(--line); font-size:0.84rem; font-weight:700; color:var(--accent-deep); vertical-align:middle; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px; }
+form { display:grid; gap:14px; position:relative; z-index:1; }
+input { width:100%; border-radius:16px; border:1px solid var(--line); padding:14px; font:inherit; color:var(--ink); background:rgba(255,255,255,0.7); box-shadow:inset 0 1px 0 rgba(255,255,255,0.6); }
+button { border:0; border-radius:999px; padding:13px 20px; font:inherit; font-weight:700; color:white; background:linear-gradient(135deg,var(--accent),var(--accent-deep)); cursor:pointer; box-shadow:0 14px 28px rgba(15,118,110,0.22); transition:transform .16s ease, box-shadow .16s ease, opacity .16s ease; }
+button:hover { transform:translateY(-1px); box-shadow:0 18px 34px rgba(15,118,110,0.26); }
+.error { display:none; border-radius:16px; padding:14px 16px; color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; }
+.hint { color:var(--muted); font-size:0.94rem; line-height:1.6; }
+.stack-note { color:var(--muted); line-height:1.6; }
+@keyframes riseIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-color-scheme: dark) {
+  :root { --ink:#edf2f7; --muted:#9aa6b2; --line:rgba(148,163,184,0.16); --accent:#2dd4bf; --accent-deep:#14b8a6; --gold:#f6c35b; --card:rgba(15,23,42,0.78); --card-strong:rgba(15,23,42,0.92); --surface:#08111f; --shadow:0 26px 70px rgba(2,6,23,0.45); }
+  body { background:radial-gradient(circle at 12% 10%, rgba(45,212,191,0.12), transparent 26%), radial-gradient(circle at 88% 12%, rgba(246,195,91,0.08), transparent 18%), linear-gradient(180deg, #07111e 0%, #0b1424 52%, #111827 100%); }
+  .card, .hero-pill, input { background:var(--card); }
+  .hero-pill { box-shadow:none; }
+  .mini-icon, .icon-chip { background:rgba(45,212,191,0.12); }
+}
+html[data-theme="dark"], [data-theme="dark"] { --ink:#edf2f7; --muted:#9aa6b2; --line:rgba(148,163,184,0.16); --accent:#2dd4bf; --accent-deep:#14b8a6; --gold:#f6c35b; --card:rgba(15,23,42,0.78); --card-strong:rgba(15,23,42,0.92); --surface:#08111f; --shadow:0 26px 70px rgba(2,6,23,0.45); }
+body[data-theme="dark"] { background:radial-gradient(circle at 12% 10%, rgba(45,212,191,0.12), transparent 26%), radial-gradient(circle at 88% 12%, rgba(246,195,91,0.08), transparent 18%), linear-gradient(180deg, #07111e 0%, #0b1424 52%, #111827 100%); }
+body[data-theme="dark"] .card, body[data-theme="dark"] .hero-pill, body[data-theme="dark"] input { background:var(--card); }
+body[data-theme="dark"] .hero-pill { box-shadow:none; }
+body[data-theme="dark"] .mini-icon, body[data-theme="dark"] .icon-chip { background:rgba(45,212,191,0.12); }
+@media (max-width:640px) {
+  .shell { padding:22px 14px 42px; gap:14px; }
+  .card { padding:22px; border-radius:24px; }
+  h1 { font-size:2.45rem; line-height:0.95; }
+  h2 { font-size:1.4rem; }
+  .hero-pills { gap:8px; }
+  .hero-pill { width:100%; justify-content:flex-start; }
+  .grid { grid-template-columns:1fr; }
+}
+.top-actions { display:flex; justify-content:flex-end; }
+.theme-toggle { display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:999px; padding:10px 14px; font:inherit; font-weight:700; color:var(--ink); background:var(--card-strong); box-shadow:none; text-decoration:none; }
+.theme-toggle:hover { box-shadow:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="shell">
+  <div class="top-actions"><a id="themeToggle" class="theme-toggle" href="/theme/toggle?next=/">{{ theme_toggle_label }}</a></div>
+  <section class="card">
+    <p class="eyebrow">Get Started</p>
+    <h1>Describe your app idea.</h1>
+    <p class="lead">Turn an idea into a starter app, follow the progress, and download the result.</p>
+    <div class="hero-pills">
+      <span class="hero-pill"><span class="mini-icon">1</span>Simple prompt</span>
+      <span class="hero-pill"><span class="mini-icon">2</span>Live progress</span>
+      <span class="hero-pill"><span class="mini-icon">3</span>Download your app</span>
+    </div>
+  </section>
+  <div id="errorBox" class="error"></div>
+  <section class="grid">
+    <section class="card">
+      <p class="eyebrow">Login</p>
+      <h2><span class="icon-chip">→</span>Open your dashboard</h2>
+      <p class="stack-note">See your app ideas, progress, and downloads in one place.</p>
+      <form id="loginForm">
+        <input id="loginEmail" type="email" placeholder="you@example.com" />
+        <input id="loginPassword" type="password" placeholder="Password" />
+        <button type="submit">Login</button>
+      </form>
+    </section>
+    <section class="card">
+      <p class="eyebrow">Register</p>
+      <h2><span class="icon-chip">+</span>Create your account</h2>
+      <p class="stack-note">Save your app ideas and results under one account.</p>
+      <form id="registerForm">
+        <input id="registerName" type="text" placeholder="Your name" />
+        <input id="registerEmail" type="email" placeholder="you@example.com" />
+        <input id="registerPassword" type="password" placeholder="Password" />
+        <button type="submit">Register</button>
+      </form>
+      <p class="hint">Start with a simple prompt, or add a few extra details if you want more control.</p>
+    </section>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="/static/js/auth.js"></script>
+{% endblock %}

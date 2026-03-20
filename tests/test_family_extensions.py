@@ -1,4 +1,4 @@
-from templates.family_extensions import FAMILY_VALIDATIONS
+from templates.family_extensions import FAMILY_PACKS, FAMILY_VALIDATIONS, FamilyPack, get_family_pack
 
 
 def test_family_validation_registry_covers_divergent_families():
@@ -19,6 +19,17 @@ def test_family_validation_registry_covers_divergent_families():
     }
 
 
+def test_family_pack_registry_exposes_typed_family_packs():
+    crm_pack = get_family_pack("crm_platform")
+
+    assert set(FAMILY_PACKS) == set(FAMILY_VALIDATIONS)
+    assert isinstance(crm_pack, FamilyPack)
+    assert crm_pack.app_type == "crm_platform"
+    assert crm_pack.has_extension is True
+    assert "@app.get('/api/crm/pipeline')" in crm_pack.backend_markers
+    assert "CrmFamilyPanel" in crm_pack.frontend_markers
+
+
 def test_family_validation_registry_exposes_backend_and_frontend_markers():
     booking = FAMILY_VALIDATIONS["booking_platform"]
 
@@ -31,8 +42,13 @@ def test_family_validation_registry_exposes_backend_and_frontend_markers():
 
     crm = FAMILY_VALIDATIONS["crm_platform"]
     assert "@app.get('/api/crm/pipeline')" in crm["backend_markers"]
+    assert "@app.get('/api/crm/account-health')" in crm["backend_markers"]
+    assert "@app.get('/api/crm/activity')" in crm["backend_markers"]
+    assert "@app.post('/api/crm/deals/{item_id}/reassign')" in crm["backend_markers"]
     assert "@app.post('/api/crm/deals/{item_id}/advance')" in crm["backend_markers"]
     assert "CrmFamilyPanel" in crm["frontend_markers"]
+    assert "crmAccountHealth" in crm["frontend_markers"]
+    assert "crmActivity" in crm["frontend_markers"]
 
     project_management = FAMILY_VALIDATIONS["project_management"]
     assert "@app.get('/api/project-management/board')" in project_management["backend_markers"]

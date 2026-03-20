@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+:root { --ink:#111827; --muted:#5b6472; --card:rgba(255,255,255,0.76); --card-strong:rgba(255,255,255,0.92); --line:rgba(15,23,42,0.08); --accent:#0f766e; --accent-deep:#115e59; --warn:#8a5b10; --danger:#b91c1c; --ok:#166534; --gold:#c89227; --shadow:0 22px 60px rgba(15,23,42,0.10); color-scheme:light dark; }
+* { box-sizing:border-box; } body { margin:0; color:var(--ink); font-family:'Manrope','Avenir Next','Segoe UI',sans-serif; background:radial-gradient(circle at 8% 6%, rgba(15,118,110,0.12), transparent 22%), radial-gradient(circle at 92% 14%, rgba(200,146,39,0.10), transparent 18%), linear-gradient(180deg, #f8fbfa 0%, #f1f5f4 46%, #eceff0 100%); }
+.shell { max-width:1240px; margin:0 auto; padding:28px 18px 64px; display:grid; gap:18px; } .hero,.composer,.history,.ops { position:relative; overflow:hidden; background:var(--card); border:1px solid var(--line); border-radius:28px; padding:24px; box-shadow:var(--shadow); backdrop-filter:blur(18px); animation:riseIn .55s ease; }
+.hero::after,.composer::after,.history::after,.ops::after { content:""; position:absolute; inset:auto -50px -70px auto; width:220px; height:220px; background:radial-gradient(circle, rgba(15,118,110,0.08), transparent 70%); pointer-events:none; }
+.eyebrow { margin:0 0 10px; color:var(--accent); text-transform:uppercase; letter-spacing:0.16em; font-size:0.76rem; } h1,h2,h3,h4,p { margin:0; position:relative; z-index:1; } h1 { font-size:clamp(2.8rem,5vw,5rem); line-height:0.9; max-width:10ch; } .lead { margin-top:12px; max-width:68ch; line-height:1.7; font-size:1.02rem; color:var(--muted); }
+.topbar { display:flex; justify-content:space-between; gap:18px; align-items:start; } .user-chip { border-radius:999px; padding:10px 14px; background:var(--card-strong); border:1px solid var(--line); box-shadow:inset 0 1px 0 rgba(255,255,255,0.5); }
+.hero-badges { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; position:relative; z-index:1; } .hero-badge { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:10px 14px; background:var(--card-strong); border:1px solid var(--line); font-size:0.9rem; box-shadow:inset 0 1px 0 rgba(255,255,255,0.45); } .hero-badge .mini-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:999px; background:rgba(15,118,110,0.10); color:var(--accent-deep); font-size:0.7rem; font-weight:700; }
+.panel { border:1px solid var(--line); border-radius:24px; padding:18px; background:linear-gradient(180deg, var(--card-strong), rgba(255,255,255,0.62)); }
+.composer { max-width:980px; margin:0 auto; width:100%; }
+.composer form, .secret-form { display:grid; gap:16px; position:relative; z-index:1; } textarea,input { width:100%; border-radius:18px; border:1px solid var(--line); padding:18px; font:inherit; font-size:1rem; color:var(--ink); background:rgba(255,255,255,0.68); resize:vertical; box-shadow:inset 0 1px 0 rgba(255,255,255,0.55); }
+textarea { min-height:180px; }
+.controls,.button-row,.secret-row,.stage-row,.template-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; } .controls label { display:flex; gap:10px; align-items:center; font-size:0.96rem; background:var(--card-strong); border:1px solid var(--line); border-radius:999px; padding:8px 12px; }
+button { border:0; border-radius:999px; padding:14px 22px; font:inherit; font-weight:700; color:white; background:linear-gradient(135deg,var(--accent),var(--accent-deep)); cursor:pointer; box-shadow:0 14px 30px rgba(15,118,110,0.22); }
+.controls button,.button-row button,.ghost-link,.ghost-button,.secondary-button { transition:transform .16s ease, box-shadow .16s ease, opacity .16s ease; }
+.controls button:hover,.button-row button:hover,.ghost-link:hover,.ghost-button:hover,.secondary-button:hover { transform:translateY(-1px); }
+.secondary-button { color:#7c4a00; background:linear-gradient(135deg, #f8ddb2, #e9b755); } .ghost-button { background:linear-gradient(135deg, #1f2937, #111827); } .ghost-link { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:13px 20px; font-weight:700; color:white; text-decoration:none; background:linear-gradient(135deg, #1f2937, #111827); } .hint { color:var(--muted); font-size:0.94rem; line-height:1.7; }
+.composer-main { display:grid; gap:14px; }
+.more-toggle-row { display:flex; justify-content:flex-start; }
+.more-options { display:none; gap:16px; margin-top:4px; }
+.more-options.visible { display:grid; }
+.quiet-grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+.mini-panel { border:1px solid var(--line); border-radius:22px; padding:16px; background:var(--card-strong); }
+.error { display:none; border-radius:16px; padding:14px 16px; color:var(--danger); background:#fee2e2; border:1px solid #fecaca; } .history-header,.run-header { display:flex; justify-content:space-between; gap:16px; align-items:start; } .history-header { margin-bottom:18px; }
+.run-list { display:grid; gap:16px; } .run-card { border-radius:24px; border:1px solid var(--line); padding:22px; background:linear-gradient(180deg, var(--card-strong), rgba(255,255,255,0.58)); box-shadow:0 16px 34px rgba(15,23,42,0.06); }
+.status-pill { border-radius:999px; padding:8px 12px; font-size:0.82rem; font-weight:700; text-transform:capitalize; display:inline-flex; align-items:center; gap:8px; } .status-icon { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:999px; background:rgba(255,255,255,0.55); font-size:0.72rem; } .status-queued { background:#e0f2fe; color:#0c4a6e; } .status-running,.status-deploying { background:#fef3c7; color:var(--warn); } .status-completed { background:#dcfce7; color:var(--ok); } .status-failed { background:#fee2e2; color:var(--danger); }
+.stage-track-wrap { min-width:220px; display:grid; gap:8px; } .stage-pill { border-radius:999px; padding:6px 10px; font-size:0.76rem; font-weight:700; background:#e2e8f0; color:#475569; width:max-content; } .stage-track { width:100%; height:7px; border-radius:999px; background:rgba(148,163,184,0.18); overflow:hidden; } .stage-fill { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, var(--accent), var(--accent-deep)); transition:width .25s ease; } .stage-done { background:#dcfce7; color:#166534; } .stage-current { background:#dbeafe; color:#1d4ed8; } .stage-failed { background:#fee2e2; color:#b91c1c; } .stage-pending { background:#e2e8f0; color:#64748b; } .stage-fill.stage-failed { background:linear-gradient(90deg, #ef4444, #b91c1c); } .stage-fill.stage-done { background:linear-gradient(90deg, #22c55e, #15803d); }
+.prompt-copy { margin:12px 0 14px; line-height:1.6; color:#334155; } .metric-grid,.detail-grid,.ops-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); } .metric-grid { margin-bottom:14px; }
+.metric { border-radius:20px; padding:14px; background:var(--card-strong); border:1px solid var(--line); } .metric span { display:block; font-size:0.76rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.empty-state { color:var(--muted); font-size:1rem; } .secret-row { justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--line); } .checklist { display:grid; gap:14px; } .check-row { border-radius:18px; padding:14px; border:1px solid var(--line); background:var(--card-strong); } .check-row p { margin-top:8px; color:var(--muted); } .check-state { display:inline-flex; margin-left:10px; font-weight:700; } .check-state.ok { color:#166534; } .check-state.warn { color:#b45309; } .advanced-fields { display:none; gap:12px; } .advanced-fields.active { display:grid; }
+@keyframes riseIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-color-scheme: dark) { :root { --ink:#edf2f7; --muted:#97a5b4; --card:rgba(15,23,42,0.78); --card-strong:rgba(15,23,42,0.92); --line:rgba(148,163,184,0.16); --accent:#2dd4bf; --accent-deep:#14b8a6; --warn:#f5c96a; --ok:#4ade80; --gold:#f6c35b; --shadow:0 28px 80px rgba(2,6,23,0.45); } body { background:radial-gradient(circle at 8% 6%, rgba(45,212,191,0.12), transparent 22%), radial-gradient(circle at 92% 14%, rgba(246,195,91,0.08), transparent 18%), linear-gradient(180deg, #07111e 0%, #0b1424 46%, #111827 100%); } .panel,.mini-panel,.metric,.check-row,.hero-badge,.user-chip,.controls label,textarea,input { background:var(--card-strong); } .run-card { background:linear-gradient(180deg, var(--card-strong), rgba(15,23,42,0.82)); } .status-icon { background:rgba(255,255,255,0.08); } }
+html[data-theme="dark"], [data-theme="dark"], html.force-dark { --ink:#edf2f7; --muted:#97a5b4; --card:rgba(15,23,42,0.78); --card-strong:rgba(15,23,42,0.92); --line:rgba(148,163,184,0.16); --accent:#2dd4bf; --accent-deep:#14b8a6; --warn:#f5c96a; --ok:#4ade80; --gold:#f6c35b; --shadow:0 28px 80px rgba(2,6,23,0.45); }
+body[data-theme="dark"], body.force-dark { background:radial-gradient(circle at 8% 6%, rgba(45,212,191,0.12), transparent 22%), radial-gradient(circle at 92% 14%, rgba(246,195,91,0.08), transparent 18%), linear-gradient(180deg, #07111e 0%, #0b1424 46%, #111827 100%); }
+body[data-theme="dark"] .panel,body[data-theme="dark"] .mini-panel,body[data-theme="dark"] .metric,body[data-theme="dark"] .check-row,body[data-theme="dark"] .hero-badge,body[data-theme="dark"] .user-chip,body[data-theme="dark"] .controls label,body[data-theme="dark"] textarea,body[data-theme="dark"] input,body.force-dark .panel,body.force-dark .mini-panel,body.force-dark .metric,body.force-dark .check-row,body.force-dark .hero-badge,body.force-dark .user-chip,body.force-dark .controls label,body.force-dark textarea,body.force-dark input { background:var(--card-strong); }
+body[data-theme="dark"] .run-card,body.force-dark .run-card { background:linear-gradient(180deg, var(--card-strong), rgba(15,23,42,0.82)); }
+body[data-theme="dark"] .status-icon,body.force-dark .status-icon { background:rgba(255,255,255,0.08); }
+body[data-theme="dark"] .stage-track,body.force-dark .stage-track { background:rgba(148,163,184,0.18); }
+@media (max-width:720px) { .shell { padding:20px 14px 44px; } .hero,.composer,.history,.ops { padding:20px; border-radius:24px; } .topbar,.history-header { flex-direction:column; align-items:flex-start; } .controls,.button-row,.template-row,.secret-row { align-items:stretch; } .controls button,.button-row button,.ghost-link,.ghost-button,.secondary-button { width:100%; justify-content:center; } .user-chip { width:100%; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="shell">
+  <section class="hero">
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">Your App Builder</p>
+        <h1>Prompt in. Product out.</h1>
+        <p class="lead">Describe what you want to build, then watch the app move from idea to verified starter.</p>
+        <div class="hero-badges">
+          <span class="hero-badge"><span class="mini-icon">AI</span> Prompt refinement</span>
+          <span class="hero-badge"><span class="mini-icon">QA</span> Quality checks</span>
+          <span class="hero-badge"><span class="mini-icon">DL</span> Downloadable app bundle</span>
+        </div>
+      </div>
+      <div class="controls">
+        <span class="user-chip">{{ user.name }} · {{ user.email }}</span>
+        <a id="themeToggle" class="ghost-link" href="/theme/toggle?next=/">{{ theme_toggle_label }}</a>
+        <button id="logoutButton" class="secondary-button" type="button">Log out</button>
+      </div>
+    </div>
+  </section>
+  {% if onboarding_markup %}
+  {{ onboarding_markup|safe }}
+  {% endif %}
+  <div id="errorBox" class="error"></div>
+  <section class="composer">
+    <form id="generatorForm">
+      <div class="composer-main">
+        <p class="eyebrow">Start a Build</p>
+        <h2>Tell us what you want to make</h2>
+        <textarea id="prompt" placeholder="Build a booking app for personal trainers with client profiles, session scheduling, and payments."></textarea>
+        <div class="template-row">
+          {% for template in prompt_templates %}
+          <button type="button" class="ghost-button template-button" data-template="{{ template.prompt }}">{{ template.label }}</button>
+          {% endfor %}
+        </div>
+        <div class="controls"><button type="submit">Build my app</button></div>
+        <div class="more-toggle-row"><button id="moreOptionsToggle" class="secondary-button" type="button">More options</button></div>
+        <div id="moreOptionsPanel" class="more-options">
+          <div class="quiet-grid">
+            <div class="mini-panel">
+              <div class="controls">
+                <label><input id="runVerification" type="checkbox" checked /> Check the app before finishing</label>
+                <label><input id="autoDeploy" type="checkbox" /> Publish online after it works</label>
+                <label><input id="advancedMode" type="checkbox" /> Add more details</label>
+              </div>
+              <div id="advancedFields" class="advanced-fields">
+                <input id="appName" placeholder="App name" />
+                <input id="targetUsers" placeholder="Who will use it?" />
+                <input id="coreEntities" placeholder="Important things in the app" />
+                <input id="coreWorkflows" placeholder="Main actions people take" />
+              </div>
+            </div>
+            <div class="mini-panel">
+              <p><strong>Builds left this month:</strong> {{ usage.remaining_runs }}</p>
+              <p><strong>AI connection:</strong> {{ provider_status.status }}</p>
+            </div>
+          </div>
+          <div class="mini-panel">
+            <p class="eyebrow">Connected Accounts</p>
+            <h3>Save keys for publishing later</h3>
+            <form id="secretForm" class="secret-form">
+              <input id="secretName" placeholder="Account name" />
+              <input id="secretValue" placeholder="Key or password" type="password" />
+              <div class="controls"><button type="submit">Save</button></div>
+            </form>
+            <div id="secretList">{{ secret_markup|safe }}</div>
+          </div>
+        </div>
+        <p class="hint">You have used <strong>{{ usage.monthly_run_usage }}</strong> of <strong>{{ usage.monthly_run_limit }}</strong> app builds this month.</p>
+      </div>
+    </form>
+  </section>
+  <section class="history">
+    <div class="history-header">
+      <div><p class="eyebrow">Your Apps</p><h2>Recent app builds</h2></div>
+      <div class="controls"><a class="ghost-link" href="/settings">Settings</a><button id="refreshRuns" class="secondary-button" type="button">Refresh</button></div>
+    </div>
+    <div id="runList" class="run-list">{{ history_markup|safe }}</div>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="/static/js/dashboard.js"></script>
+{% endblock %}
