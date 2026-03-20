@@ -1,7 +1,7 @@
 from threading import Event
 
 from engine.runtime_env import configure_runtime_environment
-from memory.control_panel_store import get_database_backend, init_db
+from memory.control_panel_store import get_database_backend, init_db, record_worker_heartbeat
 from engine.control_panel_jobs import build_worker_id, worker_loop
 
 
@@ -11,6 +11,7 @@ def main():
     runtime = configure_runtime_environment()
     init_db()
     worker_id = build_worker_id("service-worker")
+    record_worker_heartbeat(worker_id, status="starting")
     stop_event = Event()
     print(
         "Control-panel worker started with "

@@ -7,6 +7,7 @@ def test_control_panel_deployment_artifacts_exist():
         Path("deployment/control-panel-docker-compose.yml"),
         Path("deployment/control-panel-render.yaml"),
         Path("deployment/control-panel-railway.json"),
+        Path("deployment/control-panel.env.example"),
         Path("deployment/CONTROL_PANEL.md"),
     ]
 
@@ -19,6 +20,8 @@ def test_control_panel_deployment_artifacts_have_expected_markers():
     compose_text = Path("deployment/control-panel-docker-compose.yml").read_text()
     render_text = Path("deployment/control-panel-render.yaml").read_text()
     railway_text = Path("deployment/control-panel-railway.json").read_text()
+    env_text = Path("deployment/control-panel.env.example").read_text()
+    docs_text = Path("deployment/CONTROL_PANEL.md").read_text()
 
     assert "control-panel-worker" in compose_text
     assert "postgres:16" in compose_text
@@ -28,3 +31,6 @@ def test_control_panel_deployment_artifacts_have_expected_markers():
     assert "saas-generator-control-panel-db" in render_text
     assert '"startCommand": "uvicorn web_app:app --host 0.0.0.0 --port $PORT"' in railway_text
     assert "CONTROL_PANEL_DATABASE_URL" in railway_text
+    assert "CONTROL_PANEL_SECRET_KEY" in env_text
+    assert "OPENAI_API_KEY" in env_text
+    assert "/api/readiness" in docs_text

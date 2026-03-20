@@ -1,11 +1,13 @@
+import asyncio
 from contextlib import asynccontextmanager
 from html import escape
+import json
 from pathlib import Path
 import shutil
 import tempfile
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from deployment.deploy import deploy_online
@@ -26,6 +28,7 @@ from memory.control_panel_store import (
     get_usage_summary,
     get_user_by_session,
     init_db,
+    list_recent_workers,
     list_run_artifacts,
     list_run_logs,
     list_runs,
@@ -108,6 +111,29 @@ def _friendly_error_message(message):
     return text
 
 
+def _worker_status():
+    workers = list_recent_workers(limit=5)
+    return {
+        "ok": bool(workers),
+        "status": "ready" if workers else "missing",
+        "workers": workers,
+        "message": "Worker heartbeat detected." if workers else "No active worker heartbeat has been recorded yet.",
+    }
+
+
+def _readiness_status():
+    provider = check_openai_generation_access()
+    worker = _worker_status()
+    ready = bool(provider.get("ok")) and bool(worker.get("ok"))
+    return {
+        "ok": ready,
+        "database_backend": get_database_backend(),
+        "worker_mode": "external_service",
+        "provider_status": provider,
+        "worker_status": worker,
+    }
+
+
 def _build_prompt(payload: GenerateRequest):
     prompt = payload.prompt.strip()
     if payload.mode != "advanced":
@@ -167,6 +193,21 @@ def _run_stage_summary(run):
             state = "failed"
         rows.append({"key": key, "label": label, "state": state})
     return rows
+
+
+def _run_payload(user_id, run_id):
+    run = get_run(user_id, run_id)
+    if not run:
+        return None
+    logs = list_run_logs(user_id, run_id, limit=200) or []
+    artifacts = list_run_artifacts(user_id, run_id) or []
+    return {
+        **run,
+        "friendly_error": _friendly_error_message(run.get("error")),
+        "stages": _run_stage_summary(run),
+        "logs": logs,
+        "artifacts": artifacts,
+    }
 
 
 def _setup_checklist(user):
@@ -381,10 +422,11 @@ ul {{ padding-left:18px; }}
 
 
 def _render_run_detail_page(user, run):
-    result = run.get("result") or {}
-    logs = list_run_logs(user["id"], run["id"], limit=200) or []
-    artifacts = list_run_artifacts(user["id"], run["id"]) or []
-    stages = _run_stage_summary(run)
+    payload = _run_payload(user["id"], run["id"]) or {}
+    result = payload.get("result") or {}
+    logs = payload.get("logs") or []
+    artifacts = payload.get("artifacts") or []
+    stages = payload.get("stages") or []
     stage_markup = "".join(
         f"<span class='stage-pill stage-{escape(stage['state'])}'>{escape(stage['label'])}</span>"
         for stage in stages
@@ -409,12 +451,34 @@ a.button {{ display:inline-flex; text-decoration:none; color:white; background:#
 pre {{ white-space:pre-wrap; background:#0f172a; color:#e2e8f0; border-radius:16px; padding:16px; overflow:auto; }}
 ul {{ padding-left:18px; }}
 </style></head><body><main class="shell">
-<section class="card"><div class="actions"><a class="button" href="/">Back to Dashboard</a><a class="button secondary" href="/api/runs/{escape(run['id'])}/download">Download App</a><a class="button" href="/settings">Settings</a></div><h1>{escape(result.get('app_name', 'Run Details'))}</h1><p><strong>Status:</strong> {escape(run['status'])}</p><p><strong>Prompt:</strong> {escape(run['prompt'])}</p><p><strong>Error:</strong> {escape(_friendly_error_message(run.get('error') or result.get('latest_error') or 'None'))}</p></section>
-<section class="card"><h2>Stage Timeline</h2><div>{stage_markup}</div></section>
-<section class="card"><h2>Result Summary</h2><p><strong>Family:</strong> {escape(result.get('closest_family', 'pending'))}</p><p><strong>Support tier:</strong> {escape(result.get('support_tier', 'pending'))}</p><p><strong>Verification:</strong> {'Passed' if result.get('tests_passed') else 'Not passed'}</p><p><strong>Deployed:</strong> {'Yes' if result.get('deployed') else 'No'}</p></section>
-<section class="card"><h2>Artifacts</h2><ul>{artifact_markup}</ul></section>
-<section class="card"><h2>Logs</h2><pre>{escape(log_text)}</pre></section>
-</main></body></html>"""
+<section class="card"><div class="actions"><a class="button" href="/">Back to Dashboard</a><a class="button secondary" href="/api/runs/{escape(run['id'])}/download">Download App</a><a class="button" href="/settings">Settings</a></div><h1 id="runTitle">{escape(result.get('app_name', 'Run Details'))}</h1><p><strong>Status:</strong> <span id="runStatus">{escape(run['status'])}</span></p><p><strong>Prompt:</strong> <span id="runPrompt">{escape(run['prompt'])}</span></p><p><strong>Error:</strong> <span id="runError">{escape(_friendly_error_message(run.get('error') or result.get('latest_error') or 'None'))}</span></p></section>
+<section class="card"><h2>Stage Timeline</h2><div id="stageTimeline">{stage_markup}</div></section>
+<section class="card"><h2>Result Summary</h2><p><strong>Family:</strong> <span id="runFamily">{escape(result.get('closest_family', 'pending'))}</span></p><p><strong>Support tier:</strong> <span id="runSupport">{escape(result.get('support_tier', 'pending'))}</span></p><p><strong>Verification:</strong> <span id="runVerification">{'Passed' if result.get('tests_passed') else 'Not passed'}</span></p><p><strong>Deployed:</strong> <span id="runDeployed">{'Yes' if result.get('deployed') else 'No'}</span></p></section>
+<section class="card"><h2>Artifacts</h2><ul id="artifactList">{artifact_markup}</ul></section>
+<section class="card"><h2>Logs</h2><pre id="logOutput">{escape(log_text)}</pre></section>
+</main>
+<script>
+const runStream = new EventSource('/api/runs/{escape(run["id"])}/stream');
+function escapeHtml(value) {{ return String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;'); }}
+runStream.onmessage = (event) => {{
+  const payload = JSON.parse(event.data);
+  const result = payload.result || {{}};
+  document.getElementById('runTitle').textContent = result.app_name || 'Run Details';
+  document.getElementById('runStatus').textContent = payload.status || 'unknown';
+  document.getElementById('runPrompt').textContent = payload.prompt || '';
+  document.getElementById('runError').textContent = payload.friendly_error || 'None';
+  document.getElementById('runFamily').textContent = result.closest_family || 'pending';
+  document.getElementById('runSupport').textContent = result.support_tier || 'pending';
+  document.getElementById('runVerification').textContent = result.tests_passed ? 'Passed' : 'Not passed';
+  document.getElementById('runDeployed').textContent = result.deployed ? 'Yes' : 'No';
+  document.getElementById('stageTimeline').innerHTML = (payload.stages || []).map((stage) => `<span class="stage-pill stage-${{escapeHtml(stage.state)}}">${{escapeHtml(stage.label)}}</span>`).join('');
+  document.getElementById('artifactList').innerHTML = (payload.artifacts || []).map((item) => `<li><strong>${{escapeHtml(item.label)}}</strong><br />${{escapeHtml(item.path)}}</li>`).join('') || '<li>No artifacts yet.</li>';
+  document.getElementById('logOutput').textContent = (payload.logs || []).map((entry) => `[${{entry.created_at}}] ${{String(entry.level || '').toUpperCase()}}: ${{entry.message}}`).join('\\n') || 'No logs yet.';
+  if (payload.status === 'completed' || payload.status === 'failed') {{
+    runStream.close();
+  }}
+}};
+</script></body></html>"""
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -446,12 +510,14 @@ async def run_detail_page(run_id: str, request: Request):
 
 @app.get("/api/health")
 async def health():
-    return {
-        "ok": True,
-        "database_backend": get_database_backend(),
-        "worker_mode": "external_service",
-        "provider_status": check_openai_generation_access(),
-    }
+    return _readiness_status()
+
+
+@app.get("/api/readiness")
+async def readiness():
+    payload = _readiness_status()
+    status_code = 200 if payload["ok"] else 503
+    return JSONResponse(payload, status_code=status_code)
 
 
 @app.get("/api/me")
@@ -567,6 +633,34 @@ async def get_run_status(run_id: str, request: Request):
     if not run:
         return _json_error("Run not found.", status_code=404)
     return {**run, "friendly_error": _friendly_error_message(run.get("error")), "stages": _run_stage_summary(run)}
+
+
+@app.get("/api/runs/{run_id}/stream")
+async def stream_run_status(run_id: str, request: Request, once: bool = False):
+    user = _current_user(request)
+    if not user:
+        return _json_error("Unauthorized.", status_code=401)
+    if not get_run(user["id"], run_id):
+        return _json_error("Run not found.", status_code=404)
+
+    async def event_stream():
+        last_payload = None
+        while True:
+            payload = _run_payload(user["id"], run_id)
+            if payload is None:
+                yield "event: error\ndata: {}\n\n"
+                break
+            serialized = json.dumps(payload)
+            if serialized != last_payload:
+                yield f"data: {serialized}\n\n"
+                last_payload = serialized
+                if once:
+                    break
+            if payload["status"] in {"completed", "failed"}:
+                break
+            await asyncio.sleep(1)
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.get("/api/runs/{run_id}/logs")

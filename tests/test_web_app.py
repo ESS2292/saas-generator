@@ -279,16 +279,38 @@ def test_web_app_health_reports_external_worker_and_database_backend(tmp_path, m
     monkeypatch.setattr(
         web_app,
         "check_openai_generation_access",
-        lambda: {"ok": False, "status": "insufficient_quota", "message": "Quota exceeded"},
+        lambda: {"ok": True, "status": "ready", "message": "Ready"},
     )
     client = TestClient(web_app.app)
 
     response = client.get("/api/health")
 
     assert response.status_code == 200
+    assert response.json()["ok"] is False
     assert response.json()["worker_mode"] == "external_service"
     assert response.json()["database_backend"] == "sqlite"
-    assert response.json()["provider_status"]["status"] == "insufficient_quota"
+    assert response.json()["provider_status"]["status"] == "ready"
+    assert response.json()["worker_status"]["status"] == "missing"
+
+
+def test_web_app_readiness_requires_worker_heartbeat(tmp_path, monkeypatch):
+    _isolate_control_panel_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        web_app,
+        "check_openai_generation_access",
+        lambda: {"ok": True, "status": "ready", "message": "Ready"},
+    )
+    client = TestClient(web_app.app)
+
+    response = client.get("/api/readiness")
+    assert response.status_code == 503
+    assert response.json()["worker_status"]["status"] == "missing"
+
+    control_panel_store.record_worker_heartbeat("worker-1")
+    ready_response = client.get("/api/readiness")
+    assert ready_response.status_code == 200
+    assert ready_response.json()["ok"] is True
+    assert ready_response.json()["worker_status"]["status"] == "ready"
 
 
 def test_web_app_exposes_provider_status_to_authenticated_user(tmp_path, monkeypatch):
@@ -365,6 +387,38 @@ def test_web_app_renders_run_detail_page(tmp_path, monkeypatch):
     assert "CRM Control" in response.text
     assert "Stage Timeline" in response.text
     assert "Download App" in response.text
+    assert "EventSource('/api/runs/" in response.text
+
+
+def test_web_app_streams_run_updates(tmp_path, monkeypatch):
+    _isolate_control_panel_db(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        web_app,
+        "check_openai_generation_access",
+        lambda: {"ok": True, "status": "ready", "message": "Ready"},
+    )
+    client = TestClient(web_app.app)
+    register_response = _register_and_login(client)
+    user_id = register_response.json()["user"]["id"]
+    run = control_panel_store.create_run(user_id, "Build CRM", "generated_apps/crm")
+    control_panel_store.update_run(
+        run["id"],
+        status="running",
+        result={"app_name": "CRM Control", "tests_passed": False, "closest_family": "crm_platform", "support_tier": "supported"},
+        error="",
+    )
+    control_panel_store.append_run_log(run["id"], "info", "Worker claimed queued run.")
+
+    with client.stream("GET", f"/api/runs/{run['id']}/stream?once=true") as response:
+        first_event = ""
+        for line in response.iter_lines():
+            if line.startswith("data: "):
+                first_event = line
+                break
+
+    assert response.status_code == 200
+    assert '"status": "running"' in first_event
+    assert '"app_name": "CRM Control"' in first_event
 
 
 def test_web_app_downloads_run_bundle(tmp_path, monkeypatch):

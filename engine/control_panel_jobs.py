@@ -7,6 +7,7 @@ from memory.control_panel_store import (
     append_run_log,
     claim_next_job,
     get_run_by_id,
+    record_worker_heartbeat,
     replace_run_artifacts,
     update_job,
     update_run,
@@ -94,6 +95,7 @@ def process_job(job, worker_id):
 def worker_loop(stop_event, worker_id):
     # Keep polling the shared jobs table until the process is stopped.
     while not stop_event.is_set():
+        record_worker_heartbeat(worker_id)
         job = claim_next_job(worker_id)
         if job:
             process_job(job, worker_id)

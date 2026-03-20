@@ -98,6 +98,15 @@ run_artifacts = Table(
     Column("created_at", String, nullable=False),
 )
 
+worker_heartbeats = Table(
+    "worker_heartbeats",
+    metadata,
+    Column("worker_id", String, primary_key=True),
+    Column("status", String, nullable=False),
+    Column("last_seen_at", String, nullable=False),
+    Column("backend", String, nullable=False),
+)
+
 
 def _database_url():
     configured = os.getenv("CONTROL_PANEL_DATABASE_URL")
@@ -571,3 +580,34 @@ def get_database_backend():
     if url.startswith("sqlite"):
         return "sqlite"
     return "unknown"
+
+
+def record_worker_heartbeat(worker_id, status="alive"):
+    init_db()
+    payload = {
+        "worker_id": worker_id,
+        "status": status,
+        "last_seen_at": _utc_now(),
+        "backend": get_database_backend(),
+    }
+    with _engine().begin() as connection:
+        existing = connection.execute(
+            select(worker_heartbeats.c.worker_id).where(worker_heartbeats.c.worker_id == worker_id)
+        ).first()
+        if existing is None:
+            connection.execute(insert(worker_heartbeats).values(**payload))
+        else:
+            connection.execute(
+                update(worker_heartbeats)
+                .where(worker_heartbeats.c.worker_id == worker_id)
+                .values(**payload)
+            )
+
+
+def list_recent_workers(limit=10):
+    init_db()
+    with _engine().begin() as connection:
+        rows = connection.execute(
+            select(worker_heartbeats).order_by(desc(worker_heartbeats.c.last_seen_at)).limit(limit)
+        ).fetchall()
+    return [dict(row._mapping) for row in rows]
