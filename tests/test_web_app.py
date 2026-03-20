@@ -29,7 +29,7 @@ def test_web_app_index_requires_auth(tmp_path, monkeypatch):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "Control Panel Access" in response.text
+    assert "Get Started" in response.text
     assert "Register" in response.text
 
 
@@ -56,11 +56,11 @@ def test_web_app_returns_authenticated_dashboard(tmp_path, monkeypatch):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "Authenticated Control Panel" in response.text
-    assert "Your Runs" in response.text
-    assert "Stored Secrets" in response.text
-    assert "OpenAI Access" in response.text
-    assert "Advanced mode" in response.text
+    assert "Your App Builder" in response.text
+    assert "Your Apps" in response.text
+    assert "Connected Accounts" in response.text
+    assert "Build my app" in response.text
+    assert "Add more details" in response.text
 
 
 def test_web_app_returns_usage_summary(tmp_path, monkeypatch):
@@ -359,7 +359,7 @@ def test_web_app_renders_settings_page(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert "Settings" in response.text
-    assert "Provider Status" in response.text
+    assert "AI Connection" in response.text
 
 
 def test_web_app_renders_run_detail_page(tmp_path, monkeypatch):
@@ -385,8 +385,8 @@ def test_web_app_renders_run_detail_page(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     assert "CRM Control" in response.text
-    assert "Stage Timeline" in response.text
-    assert "Download App" in response.text
+    assert "Progress" in response.text
+    assert "Download app" in response.text
     assert "EventSource('/api/runs/" in response.text
 
 
