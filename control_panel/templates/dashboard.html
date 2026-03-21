@@ -19,9 +19,7 @@ button { border:0; border-radius:999px; padding:14px 22px; font:inherit; font-we
 .controls button:hover,.button-row button:hover,.ghost-link:hover,.ghost-button:hover,.secondary-button:hover { transform:translateY(-1px); }
 .secondary-button { color:#7c4a00; background:linear-gradient(135deg, #f8ddb2, #e9b755); } .ghost-button { background:linear-gradient(135deg, #1f2937, #111827); } .ghost-link { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:13px 20px; font-weight:700; color:white; text-decoration:none; background:linear-gradient(135deg, #1f2937, #111827); } .hint { color:var(--muted); font-size:0.94rem; line-height:1.7; }
 .composer-main { display:grid; gap:14px; }
-.more-toggle-row { display:flex; justify-content:flex-start; }
-.more-options { display:none; gap:16px; margin-top:4px; }
-.more-options.visible { display:grid; }
+.more-options-body { display:grid; gap:16px; margin-top:14px; }
 .quiet-grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
 .mini-panel { border:1px solid var(--line); border-radius:22px; padding:16px; background:var(--card-strong); }
 .error { display:none; border-radius:16px; padding:14px 16px; color:var(--danger); background:#fee2e2; border:1px solid #fecaca; } .history-header,.run-header { display:flex; justify-content:space-between; gap:16px; align-items:start; } .history-header { margin-bottom:18px; }
@@ -80,8 +78,7 @@ body[data-theme="dark"] .stage-track,body.force-dark .stage-track { background:r
           {% endfor %}
         </div>
         <div class="controls"><button type="submit">Build my app</button></div>
-        <div class="more-toggle-row"><button id="moreOptionsToggle" class="secondary-button" type="button">More options</button></div>
-        <div id="moreOptionsPanel" class="more-options">
+        <div id="moreOptionsPanel" class="more-options-body">
           <div class="quiet-grid">
             <div class="mini-panel">
               <div class="controls">
@@ -104,11 +101,11 @@ body[data-theme="dark"] .stage-track,body.force-dark .stage-track { background:r
           <div class="mini-panel">
             <p class="eyebrow">Connected Accounts</p>
             <h3>Save keys for publishing later</h3>
-            <form id="secretForm" class="secret-form">
+            <div id="secretForm" class="secret-form">
               <input id="secretName" placeholder="Account name" />
               <input id="secretValue" placeholder="Key or password" type="password" />
-              <div class="controls"><button type="submit">Save</button></div>
-            </form>
+              <div class="controls"><button id="secretSaveButton" type="button">Save</button></div>
+            </div>
             <div id="secretList">{{ secret_markup|safe }}</div>
           </div>
         </div>

@@ -58,8 +58,8 @@ def test_web_app_returns_authenticated_dashboard(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert "Your App Builder" in response.text
     assert "Your Apps" in response.text
-    assert "Connected Accounts" in response.text
     assert "Build my app" in response.text
+    assert "Connected Accounts" in response.text
     assert "Add more details" in response.text
 
 

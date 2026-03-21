@@ -6,13 +6,11 @@ const runList = $("#runList");
 const errorBox = $("#errorBox");
 const secretList = $("#secretList");
 const generatorForm = $("#generatorForm");
-const secretForm = $("#secretForm");
+const secretSaveButton = $("#secretSaveButton");
 const refreshRuns = $("#refreshRuns");
 const logoutButton = $("#logoutButton");
 const advancedMode = $("#advancedMode");
 const advancedFields = $("#advancedFields");
-const moreOptionsToggle = $("#moreOptionsToggle");
-const moreOptionsPanel = $("#moreOptionsPanel");
 
 function renderRun(run) {
   const result = run.result || {};
@@ -101,8 +99,7 @@ async function deployRun(runId) {
   }
 }
 
-async function saveSecret(event) {
-  event.preventDefault();
+async function saveSecret() {
   try {
     await requestJson("/api/secrets", {
       method: "POST",
@@ -129,7 +126,7 @@ async function deleteSecretByName(name) {
 }
 
 generatorForm?.addEventListener("submit", startRun);
-secretForm?.addEventListener("submit", saveSecret);
+secretSaveButton?.addEventListener("click", saveSecret);
 refreshRuns?.addEventListener("click", loadRuns);
 logoutButton?.addEventListener("click", async () => {
   await requestJson("/api/auth/logout", { method: "POST" });
@@ -137,10 +134,6 @@ logoutButton?.addEventListener("click", async () => {
 });
 advancedMode?.addEventListener("change", (event) => {
   advancedFields?.classList.toggle("active", event.target.checked);
-});
-moreOptionsToggle?.addEventListener("click", () => {
-  const expanded = moreOptionsPanel?.classList.toggle("visible");
-  moreOptionsToggle.textContent = expanded ? "Hide extra options" : "More options";
 });
 document.addEventListener("click", (event) => {
   const templateButton = event.target.closest(".template-button");
